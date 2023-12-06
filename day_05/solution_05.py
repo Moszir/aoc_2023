@@ -64,18 +64,20 @@ class MapSegment:
 Level = typing.List[MapSegment]
 
 
-class Maps:
-    def __init__(self, lines: typing.List[str]):
-        self.__seeds = [int(x) for x in lines[0].split(' ')[1:]]
-        self.__levels: typing.List[Level] = []
-        for line in lines[1:]:
-            if line == '':  # There is a new level coming
-                self.__levels.append([])
-            elif not line[0].isdigit():  # Description of the level -> ignore
-                continue
-            else:
-                p = [int(x) for x in line.split(' ')]
-                self.__levels[-1].append(MapSegment(y=p[0], a=p[1], b=p[1] + p[2] - 1))
+class Solution:
+    def __init__(self, file_name: str):
+        with open(file_name) as test_input:
+            lines = [line.strip() for line in test_input.readlines()]
+            self.__seeds = [int(x) for x in lines[0].split(' ')[1:]]
+            self.__levels: typing.List[Level] = []
+            for line in lines[1:]:
+                if line == '':  # There is a new level coming
+                    self.__levels.append([])
+                elif not line[0].isdigit():  # Description of the level -> ignore
+                    continue
+                else:
+                    p = [int(x) for x in line.split(' ')]
+                    self.__levels[-1].append(MapSegment(y=p[0], a=p[1], b=p[1] + p[2] - 1))
 
     def process_segments(self, segments: Segments) -> Segments:
         for level in self.__levels:
@@ -104,23 +106,18 @@ class Maps:
         return min((segment.a for segment in self.process_segments(segments)))
 
 
-class TestDay5(unittest.TestCase):
-    @staticmethod
-    def __get_lines(file_name: str) -> typing.List[str]:
-        with open(file_name) as test_input:
-            return [line.strip() for line in test_input.readlines()]
-
-    def test_a(self):
-        self.assertEqual(35, Maps(self.__get_lines('example.txt')).solve_a())
+class Tests(unittest.TestCase):
+    def test_a_example(self):
+        self.assertEqual(35, Solution('example.txt').solve_a())
 
     def test_a_input(self):
-        self.assertEqual(388_071_289, Maps(self.__get_lines('input.txt')).solve_a())
+        self.assertEqual(388_071_289, Solution('input.txt').solve_a())
 
-    def test_b(self):
-        self.assertEqual(46, Maps(self.__get_lines('example.txt')).solve_b())
+    def test_b_example(self):
+        self.assertEqual(46, Solution('example.txt').solve_b())
 
     def test_b_input(self):
-        self.assertEqual(84_206_669, Maps(self.__get_lines('input.txt')).solve_b())
+        self.assertEqual(84_206_669, Solution('input.txt').solve_b())
 
 
 if __name__ == '__main__':

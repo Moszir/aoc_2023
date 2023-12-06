@@ -3,9 +3,10 @@ import typing
 import unittest
 
 
-class EngineMap:
-    def __init__(self, engine_map: typing.List[str]):
-        self.__map = engine_map
+class Solution:
+    def __init__(self, file_name: str):
+        with open(file_name) as test_input:
+            self.__map = [line.strip() for line in test_input.readlines()]
 
     @property
     def number_of_rows(self):
@@ -21,7 +22,7 @@ class EngineMap:
         size: int = 0
 
     def read_number(self, row_index: int, column_index: int) -> Result:
-        result = EngineMap.Result()
+        result = Solution.Result()
         row = self.__map[row_index]
         while column_index + result.size < self.number_of_columns and row[column_index:column_index+result.size+1].isdigit():
             result.size += 1
@@ -82,19 +83,18 @@ class EngineMap:
             if len(gear) == 2))
 
 
-class TestDay3(unittest.TestCase):
-    @staticmethod
-    def __get_map(file_name: str) -> typing.List[str]:
-        with open(file_name) as test_input:
-            return [line.strip() for line in test_input.readlines()]
+class Tests(unittest.TestCase):
+    def test_a_example(self):
+        self.assertEqual(4_361, Solution('example.txt').solve_a())
 
-    def test_a(self):
-        self.assertEqual(4_361, EngineMap(self.__get_map('example.txt')).solve_a())
-        self.assertEqual(540_212, EngineMap(self.__get_map('input.txt')).solve_a())
+    def test_a_input(self):
+        self.assertEqual(540_212, Solution('input.txt').solve_a())
 
-    def test_b(self):
-        self.assertEqual(467_835, EngineMap(self.__get_map('example.txt')).solve_b())
-        self.assertEqual(87_605_697, EngineMap(self.__get_map('input.txt')).solve_b())
+    def test_b_example(self):
+        self.assertEqual(467_835, Solution('example.txt').solve_b())
+
+    def test_b_input(self):
+        self.assertEqual(87_605_697, Solution('input.txt').solve_b())
 
 
 if __name__ == '__main__':

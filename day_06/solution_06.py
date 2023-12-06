@@ -3,10 +3,12 @@ import typing
 import unittest
 
 
-class Races:
-    def __init__(self, lines: typing.List[str]):
-        self.__times = [int(x) for x in lines[0].split(': ')[1].split(' ') if x != '']
-        self.__records = [int(x) for x in lines[1].split(': ')[1].split(' ') if x != '']
+class Solution:
+    def __init__(self, file_name: str):
+        with open(file_name) as test_input:
+            lines = [line.strip() for line in test_input.readlines()]
+            self.__times = [int(x) for x in lines[0].split(': ')[1].split(' ') if x != '']
+            self.__records = [int(x) for x in lines[1].split(': ')[1].split(' ') if x != '']
 
     @staticmethod
     def __count_ways_to_beat_record(time: int, record: int) -> int:
@@ -44,7 +46,7 @@ class Races:
     def solve_a(self) -> int:
         accu = 1
         for time, record in zip(self.__times, self.__records):
-            accu *= self.__count_ways_to_beat_record(time, record, )
+            accu *= self.__count_ways_to_beat_record(time=time, record=record)
         return accu
 
     def solve_b(self) -> int:
@@ -53,23 +55,18 @@ class Races:
         return self.__count_ways_to_beat_record(time=time, record=record)
 
 
-class TestDay5(unittest.TestCase):
-    @staticmethod
-    def __get_lines(file_name: str) -> typing.List[str]:
-        with open(file_name) as test_input:
-            return [line.strip() for line in test_input.readlines()]
-
-    def test_a(self):
-        self.assertEqual(288, Races(self.__get_lines('example.txt')).solve_a())
+class Tests(unittest.TestCase):
+    def test_a_example(self):
+        self.assertEqual(288, Solution('example.txt').solve_a())
 
     def test_a_input(self):
-        self.assertEqual(1_108_800, Races(self.__get_lines('input.txt')).solve_a())
+        self.assertEqual(1_108_800, Solution('input.txt').solve_a())
 
-    def test_b(self):
-        self.assertEqual(71503, Races(self.__get_lines('example.txt')).solve_b())
+    def test_b_example(self):
+        self.assertEqual(71_503, Solution('example.txt').solve_b())
 
     def test_b_input(self):
-        self.assertEqual(36_919_753, Races(self.__get_lines('input.txt')).solve_b())
+        self.assertEqual(36_919_753, Solution('input.txt').solve_b())
 
 
 if __name__ == '__main__':
