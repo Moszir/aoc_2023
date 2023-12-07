@@ -1,7 +1,7 @@
 import unittest
 
-labels = ['2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K', 'A']
-b_labels = ['J', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'Q', 'K', 'A']
+labels = '23456789TJQKA'
+b_labels = 'J23456789TQKA'
 
 
 class Hand:
@@ -20,8 +20,7 @@ class Hand:
 class Solution:
     def __init__(self, file_name: str):
         with open(file_name) as test_input:
-            lines = [line.strip() for line in test_input.readlines()]
-            self.__hands = [Hand(line) for line in lines]
+            self.__hands = [Hand(line.strip()) for line in test_input.readlines()]
 
     def solve_a(self) -> int:
         hands = sorted(self.__hands, key=lambda hand: (hand.type_rank, hand.label_rank))
