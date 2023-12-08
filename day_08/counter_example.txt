@@ -1,0 +1,11 @@
+LLR
+
+11A = (11Z, XXX)
+11Z = (11Y, XXX)
+11Y = (XXX, 11A)
+21A = (21B, XXX)
+21B = (21C, XXX)
+21C = (XXX, 21Z)
+21Z = (21A, 21A)
+XXX = (XXX, ZZZ)
+ZZZ = (ZZZ, ZZZ)
