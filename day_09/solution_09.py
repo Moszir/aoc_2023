@@ -1,5 +1,3 @@
-import dataclasses
-import typing
 import unittest
 
 
@@ -10,32 +8,20 @@ class Solution:
             self.sequences = [[int(x) for x in line.split(' ')] for line in lines]
 
     @staticmethod
-    def extrapolate(sequence):
+    def generate_table(sequence):
         table = [sequence]
         while any(x != 0 for x in table[-1]):
             table.append([])
             for i in range(len(table[-2])-1):
                 table[-1].append(table[-2][i+1] - table[-2][i])
-        table[-1].append(0)
-        i = len(table) - 2
-        while i >= 0:
-            table[i].append(table[i][-1] + table[i+1][-1])
-            i -= 1
-        return table[0][-1]
+        return table
 
-    @staticmethod
-    def extrapolate_back(sequence):
-        table = [sequence]
-        while any(x != 0 for x in table[-1]):
-            table.append([])
-            for i in range(len(table[-2])-1):
-                table[-1].append(table[-2][i+1] - table[-2][i])
-        solution = 0
-        i = len(table) - 2
-        while i >= 0:
-            solution = table[i][0] - solution
-            i -= 1
-        return solution
+    def extrapolate(self, sequence):
+        return sum((row[-1] for row in self.generate_table(sequence)))
+
+    def extrapolate_back(self, sequence):
+        first_column = [row[0] for row in self.generate_table(sequence)]
+        return sum((a-b for a, b in zip(first_column[0::2], first_column[1::2])))  # a0 - a1 + a2 - a3 + ...
 
     def solve_a(self) -> int:
         return sum((self.extrapolate(sequence) for sequence in self.sequences))
