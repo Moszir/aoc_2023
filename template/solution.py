@@ -1,6 +1,9 @@
 import dataclasses
+import itertools
 import typing
 import unittest
+
+from moszir_utils.asterisk import *
 
 
 class Solution:
