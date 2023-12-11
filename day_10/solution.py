@@ -106,6 +106,53 @@ class Solution:
             for position in self.map.positions()
             if blow_map[blow(position)] == '.')
 
+    def replace_s(self):
+        start = self.map.find_first('S')
+
+        up = self.match_vertically(self.map[start.up], self.map[start])
+        down = self.match_vertically(self.map[start], self.map[start.down])
+        left = self.match_horizontally(self.map[start.left], self.map[start])
+        right = self.match_horizontally(self.map[start], self.map[start.right])
+        assert sum((up, down, left, right)) == 2, 'S should have 2 connections!'
+
+        self.map[start] = (
+            '|' if up and down else
+            'J' if up and left else
+            'L' if up and right else
+            '7' if left and down else
+            'F' if down and right else
+            '-' if left and right else None)
+        assert self.map[start] is not None, 'Could not replace S!'
+
+    def solve_b_ray_casting(self) -> int:
+        """ Ray-casting algorithm from Reddit
+        https://www.reddit.com/r/adventofcode/comments/18fgddy/2023_day_10_part_2_using_a_rendering_algorithm_to/
+        """
+
+        # Remove the pipes outside the main loop
+        main_loop = set(self.find_main_loop())
+        for row_index in range(self.map.height):
+            for column_index in range(self.map.width):
+                position = Position(row=row_index, column=column_index)
+                if position not in main_loop:
+                    self.map[position] = '.'
+
+        self.replace_s()
+
+        # Imagine that we cast a ray in every row, slightly above the horizontal pipe.
+        # Then only 'L', '|', 'J' pipes will block us ('F' and '7' do not).
+        # We start each row outside, and the blocking pipes will alternate inside and outside.
+        count = 0
+        for row in range(self.map.height):
+            inside = False
+            for column in range(self.map.width):
+                value = self.map[Position(row=row, column=column)]
+                if value == '.' and inside:
+                    count += 1
+                elif value in ('L', '|', 'J'):
+                    inside = not inside
+        return count
+
 
 class Tests(unittest.TestCase):
     def test_a_example(self):
@@ -119,6 +166,9 @@ class Tests(unittest.TestCase):
 
     def test_b_input(self):
         self.assertEqual(303, Solution('input.txt').solve_b())
+
+    def test_b_input_ray_casting(self):
+        self.assertEqual(303, Solution('input.txt').solve_b_ray_casting())
 
 
 if __name__ == '__main__':
