@@ -1,5 +1,8 @@
+import copy
 import dataclasses
 import itertools
+import math
+import pathlib
 import typing
 import unittest
 
@@ -7,9 +10,8 @@ from moszir_utils.asterisk import *
 
 
 class Solution:
-    def __init__(self, file_name: str):
-        with open(file_name) as test_input:
-            lines = [line.strip() for line in test_input.readlines()]
+    def __init__(self, path: pathlib.Path):
+        lines = path.read_text().splitlines()
 
     def solve_a(self) -> int:
         return 0
@@ -19,17 +21,25 @@ class Solution:
 
 
 class Tests(unittest.TestCase):
+    @staticmethod
+    def example():
+        return Solution(pathlib.Path('example.txt'))
+
+    @staticmethod
+    def real_input():
+        return Solution(pathlib.Path('input.txt'))
+
     def test_a_example(self):
-        self.assertEqual(0, Solution('example.txt').solve_a())
+        self.assertEqual(0, self.example().solve_a())
 
     def test_a_input(self):
-        self.assertEqual(0, Solution('input.txt').solve_a())
+        self.assertEqual(0, self.real_input().solve_a())
 
     def test_b_example(self):
-        self.assertEqual(0, Solution('example.txt').solve_b())
+        self.assertEqual(0, self.example().solve_b())
 
     def test_b_input(self):
-        self.assertEqual(0, Solution('input.txt').solve_b())
+        self.assertEqual(0, self.real_input().solve_b())
 
 
 if __name__ == '__main__':

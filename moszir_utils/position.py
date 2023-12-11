@@ -29,3 +29,7 @@ class Position:
     @property
     def neighbors(self) -> typing.List['Position']:
         return [self.up, self.right, self.down, self.left]
+
+    @classmethod
+    def manhattan_distance(cls, point1: 'Position', point2: 'Position') -> int:
+        return abs(point1.row - point2.row) + abs(point1.column - point2.column)
