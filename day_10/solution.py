@@ -169,6 +169,17 @@ class Tests(unittest.TestCase):
     def test_b_input_ray_casting(self):
         self.assertEqual(303, Solution('input.txt').solve_b_ray_casting())
 
+    # Another input from
+    # https://www.reddit.com/r/adventofcode/comments/18firip/2023_day_10_an_alternate_input_to_visualize/
+    def test_a_reddit(self):
+        self.assertEqual(3022, Solution('input_2.txt').solve_a())
+
+    def test_b_reddit(self):
+        self.assertEqual(0, Solution('input_2.txt').solve_b())
+
+    def test_b_reddit_ray_casting(self):
+        self.assertEqual(0, Solution('input_2.txt').solve_b_ray_casting())
+
 
 if __name__ == '__main__':
     unittest.main()
