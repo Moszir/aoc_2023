@@ -2,12 +2,15 @@ import pathlib
 import typing
 import unittest
 
+type Clue = typing.List[int]
+type Clues = typing.List[Clue]
+
 
 class Solution:
     def __init__(self, path: pathlib.Path):
         lines = path.read_text().splitlines()
         self.springs = [line.split(' ')[0] for line in lines]
-        self.clues = [[int(c) for c in line.split(' ')[1].split(',')] for line in lines]
+        self.clues: Clues = [[int(c) for c in line.split(' ')[1].split(',')] for line in lines]
 
     @staticmethod
     def solve_line(line: str, clue: typing.List[int]) -> int:
@@ -78,9 +81,68 @@ class Solution:
         ))
 
     def solve_b(self) -> int:
-        self.springs = ['?'.join((line, line, line, line, line)) for line in self.springs]
-        self.clues = [[*c, *c, *c, *c, *c] for c in self.clues]
+        self.springs = ['?'.join([line] * 5) for line in self.springs]
+        self.clues = [clue * 5 for clue in self.clues]
         return self.solve_a()
+
+
+class BasicTests(unittest.TestCase):
+    def __test(self, expected: int, line: str, clue: Clue):
+        self.assertEqual(expected, Solution.solve_line(line, clue))
+
+    def test_no_blocks(self):
+        self.__test(1, '.', [])
+        self.__test(0, '#', [])
+        self.__test(1, '?', [])
+
+    def test_one_block(self):
+        self.__test(1, '#', [1])
+        self.__test(0, '.', [1])
+        self.__test(1, '?', [1])
+        self.__test(1, '..###....', [3])
+        self.__test(1, '..?##....', [3])
+        self.__test(1, '..#?#....', [3])
+        self.__test(1, '..##?....', [3])
+        self.__test(1, '..??#....', [3])
+        self.__test(1, '..?#?....', [3])
+        self.__test(1, '..#??....', [3])
+        self.__test(1, '..???....', [3])
+        self.__test(2, '.????....', [3])
+        self.__test(7, '?????????', [3])
+
+
+class ExponentialTests(unittest.TestCase):
+    """A funny example for the power of memoization"""
+    @staticmethod
+    def repeat_line(i: int) -> str:
+        return '??.' * i
+
+    @staticmethod
+    def repeat_clue(i: int) -> Clue:
+        return [1] * i
+
+    def test_test_setup(self):
+        self.assertEqual('??.??.??.', self.repeat_line(3))
+        self.assertEqual([1, 1, 1], self.repeat_clue(3))
+
+    def __test(self, n: int):
+        self.assertEqual(2 ** n, Solution.solve_line(self.repeat_line(n), self.repeat_clue(n)))
+
+    def test_100(self):
+        self.__test(100)  # 19ms
+
+    def test_200(self):
+        self.__test(200)  # 86ms
+
+    def test_300(self):
+        self.__test(300)  # 221ms
+        # The solution is 2037035976334486086268445688409378161051468393665936250636140449354381299763336706183397376
+        # print(2**300)
+
+    # @unittest.skip('Maximum recursion depth exceeded')
+    # def test_400(self):
+    #     """ Homework: eliminate recursion from the algorithm. """
+    #     self.__test(400)
 
 
 class Tests(unittest.TestCase):
