@@ -1,12 +1,5 @@
-import copy
-import dataclasses
-import itertools
-import math
 import pathlib
-import typing
 import unittest
-
-from moszir_utils.asterisk import *
 
 
 class Solution:
@@ -79,13 +72,25 @@ class Solution:
         self.down()
         self.right()
 
-    def solve_b(self) -> int:
+    def as_string(self):
+        return ''.join(''.join(line) for line in self.lines)
+
+    def solve_b(self, cycles: int = 1_000_000_000) -> int:
         scores = []
-        for _ in range(200):
+        jumped = False
+        k = 0
+        while k < cycles:
             self.cycle()
-            scores.append(self.score())
-        print(scores)
-        return scores
+            if not jumped:
+                s = self.as_string()
+                if s not in scores:
+                    scores.append(s)
+                else:
+                    cycle = k - scores.index(s)
+                    k += ((cycles - k) // cycle) * cycle
+                    jumped = True
+            k += 1
+        return self.score()
 
 
 class Tests(unittest.TestCase):
@@ -101,100 +106,63 @@ class Tests(unittest.TestCase):
         self.assertEqual(136, self.example().solve_a())
 
     def test_a_input(self):
-        self.assertEqual(109661, self.real_input().solve_a())
+        self.assertEqual(109_661, self.real_input().solve_a())
 
     def test_b_example(self):
         self.assertEqual(64, self.example().solve_b())
 
     def test_b_input(self):
-        scores = self.real_input().solve_b()[-18:]
-        print((1_000_000_000-182) % 18)
-        print(scores)
-        print(scores[(1_000_000_000-182-1) % 18])
-        self.assertEqual(0, self.real_input().solve_b())
+        self.assertEqual(90_176, self.real_input().solve_b())
 
     def test_down(self):
         a = self.example()
         a.down()
-        for line in a.lines:
-            print(''.join(line))
-        # O....#....
-        # O.OO#....#
-        # .....##...
-        # OO.#O....O
-        # .O.....O#.
-        # O.#..O.#.#
-        # ..O..#O..O
-        # .......O..
-        # #....###..
-        # #OO..#....
-
-        # .....#....
-        # ....#....#
-        # ...O.##...
-        # ...#......
-        # O.O....O#O
-        # O.#..O.#.#
-        # O....#....
-        # OO....OO..
-        # #OO..###..
-        # #OO.O#...O
+        self.assertEqual(
+            a.as_string(),
+            ".....#...."
+            "....#....#"
+            "...O.##..."
+            "...#......"
+            "O.O....O#O"
+            "O.#..O.#.#"
+            "O....#...."
+            "OO....OO.."
+            "#OO..###.."
+            "#OO.O#...O"
+        )
 
     def test_left(self):
         a = self.example()
         a.left()
-        for line in a.lines:
-            print(''.join(line))
-        # O....#....
-        # O.OO#....#
-        # .....##...
-        # OO.#O....O
-        # .O.....O#.
-        # O.#..O.#.#
-        # ..O..#O..O
-        # .......O..
-        # #....###..
-        # #OO..#....
-
-        # O....#....
-        # OOO.#....#
-        # .....##...
-        # OO.#OO....
-        # OO......#.
-        # O.#O...#.#
-        # O....#OO..
-        # O.........
-        # #....###..
-        # #OO..#....
+        self.assertEqual(
+            a.as_string(),
+            "O....#...."
+            "OOO.#....#"
+            ".....##..."
+            "OO.#OO...."
+            "OO......#."
+            "O.#O...#.#"
+            "O....#OO.."
+            "O........."
+            "#....###.."
+            "#OO..#....")
 
     def test_right(self):
         a = self.example()
         a.right()
-        for line in a.lines:
-            print(''.join(line))
-        # O....#....
-        # O.OO#....#
-        # .....##...
-        # OO.#O....O
-        # .O.....O#.
-        # O.#..O.#.#
-        # ..O..#O..O
-        # .......O..
-        # #....###..
+        self.assertEqual(
+            a.as_string(),
+            "....O#...."
+            ".OOO#....#"
+            ".....##..."
+            ".OO#....OO"
+            "......OO#."
+            ".O#...O#.#"
+            "....O#..OO"
+            ".........O"
+            "#....###.."
+            "#..OO#....")
 
-        # ....O#....
-        # .OOO#....#
-        # .....##...
-        # .OO#....OO
-        # ......OO#.
-        # .O#...O#.#
-        # ....O#..OO
-        # .........O
-        # #....###..
-        # #..OO#....
-
-
-# 200 + k*18 + r == 1_000_000_000
 
 if __name__ == '__main__':
     unittest.main()
