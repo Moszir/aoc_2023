@@ -20,39 +20,6 @@ class Solution:
                         self.lines[r][col] = '.'
                         r -= 1
 
-    def down(self):
-        for col in range(self.width):
-            for row in range(self.height).__reversed__():
-                c = self.lines[row][col]
-                if c == 'O':
-                    r = row
-                    while r+1 < self.height and self.lines[r+1][col] == '.':
-                        self.lines[r+1][col] = 'O'
-                        self.lines[r][col] = '.'
-                        r += 1
-
-    def left(self):
-        for row in range(self.height):
-            for col in range(self.width):
-                p = self.lines[row][col]
-                if p == 'O':
-                    c = col
-                    while c-1 >= 0 and self.lines[row][c-1] == '.':
-                        self.lines[row][c-1] = 'O'
-                        self.lines[row][c] = '.'
-                        c -= 1
-
-    def right(self):
-        for row in range(self.height):
-            for col in range(self.width).__reversed__():
-                p = self.lines[row][col]
-                if p == 'O':
-                    c = col
-                    while c+1 < self.width and self.lines[row][c+1] == '.':
-                        self.lines[row][c+1] = 'O'
-                        self.lines[row][c] = '.'
-                        c += 1
-
     def score(self):
         score = 0
         for col in range(self.width):
@@ -66,11 +33,13 @@ class Solution:
         self.up()
         return self.score()
 
+    def rotate(self):
+        self.lines = [list(reversed(line)) for line in zip(*self.lines)]
+
     def cycle(self):
-        self.up()
-        self.left()
-        self.down()
-        self.right()
+        for _ in range(4):
+            self.up()
+            self.rotate()
 
     def as_string(self):
         return ''.join(''.join(line) for line in self.lines)
@@ -113,55 +82,6 @@ class Tests(unittest.TestCase):
 
     def test_b_input(self):
         self.assertEqual(90_176, self.real_input().solve_b())
-
-    def test_down(self):
-        a = self.example()
-        a.down()
-        self.assertEqual(
-            a.as_string(),
-            ".....#...."
-            "....#....#"
-            "...O.##..."
-            "...#......"
-            "O.O....O#O"
-            "O.#..O.#.#"
-            "O....#...."
-            "OO....OO.."
-            "#OO..###.."
-            "#OO.O#...O"
-        )
-
-    def test_left(self):
-        a = self.example()
-        a.left()
-        self.assertEqual(
-            a.as_string(),
-            "O....#...."
-            "OOO.#....#"
-            ".....##..."
-            "OO.#OO...."
-            "OO......#."
-            "O.#O...#.#"
-            "O....#OO.."
-            "O........."
-            "#....###.."
-            "#OO..#....")
-
-    def test_right(self):
-        a = self.example()
-        a.right()
-        self.assertEqual(
-            a.as_string(),
-            "....O#...."
-            ".OOO#....#"
-            ".....##..."
-            ".OO#....OO"
-            "......OO#."
-            ".O#...O#.#"
-            "....O#..OO"
-            ".........O"
-            "#....###.."
-            "#..OO#....")
 
 
 if __name__ == '__main__':
