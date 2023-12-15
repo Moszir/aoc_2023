@@ -21,20 +21,24 @@ class Solution:
         def __le__(self, other: 'Solution.Cubes'):
             return self.greens <= other.greens and self.reds <= other.reds and self.blues <= other.blues
 
+        @property
+        def power(self) -> int:
+            return self.greens * self.reds * self.blues
+
     @staticmethod
     def minimum_cubes(game: str) -> Cubes:
         cubes = Solution.Cubes()
         # Remove the "Game 13:" from the start, then the revealed subsets are separated by a ';'
         for game_set in game.split(':')[1].split(';'):
             s = game_set.strip().replace(',', '').split(' ')
-            # s looks like: ['green', '32', 'red', '4', 'blue', '15']
-            for i in range(0, len(s), 2):
-                if s[i+1] == 'green':
-                    cubes.greens = max(cubes.greens, int(s[i]))
-                elif s[i+1] == 'red':
-                    cubes.reds = max(cubes.reds, int(s[i]))
-                elif s[i+1] == 'blue':
-                    cubes.blues = max(cubes.blues, int(s[i]))
+            # s looks like: ['32', 'green', '4', 'red', '15', 'blue']
+            for value, color in zip(s[::2], s[1::2]):
+                if color == 'green':
+                    cubes.greens = max(cubes.greens, int(value))
+                elif color == 'red':
+                    cubes.reds = max(cubes.reds, int(value))
+                elif color == 'blue':
+                    cubes.blues = max(cubes.blues, int(value))
         return cubes
 
     def solve_a(self) -> int:
@@ -45,10 +49,7 @@ class Solution:
             if self.minimum_cubes(game) <= reference))
 
     def solve_b(self) -> int:
-        def power(cubes: Solution.Cubes) -> int:
-            return cubes.greens * cubes.reds * cubes.blues
-
-        return sum((power(self.minimum_cubes(game)) for game in self.__games))
+        return sum((self.minimum_cubes(game).power for game in self.__games))
 
 
 class Tests(unittest.TestCase):
