@@ -1,55 +1,39 @@
-import copy
-import dataclasses
-import itertools
-import math
 import pathlib
-import typing
 import unittest
-
-from moszir_utils.asterisk import *
 
 
 class Solution:
     def __init__(self, path: pathlib.Path):
-        self.lines = path.read_text().split(',')
-        # print(lines)
+        self.entries = path.read_text().split(',')
 
-    def hash(self, line: str):
+    @staticmethod
+    def hash(word: str):
         accu = 0
-        for c in line:
+        for c in word:
             accu += ord(c)
             accu *= 17
             accu %= 256
         return accu
 
     def solve_a(self) -> int:
-        return sum((self.hash(line) for line in self.lines))
+        return sum((self.hash(entry) for entry in self.entries))
 
     def solve_b(self) -> int:
         boxes = [[] for _ in range(256)]
-        for line in self.lines:
-            if line[-1] == '-':
-                name = line[:-1]
-                box_index = self.hash(name)
-                box = boxes[box_index]
-                for i in range(len(box)):
-                    if box[i][0] == name:
-                        del box[i]
-                        break
+        for entry in self.entries:
+            if entry[-1] == '-':
+                name = entry[:-1]
+                index = self.hash(name)
+                boxes[index] = [lens for lens in boxes[index] if lens[0] != name]
             else:
-                name = line.split('=')[0]
-                focal = int(line.split('=')[1])
-                box_index = self.hash(name)
-                box = boxes[box_index]
-                found = False
-                for i in range(len(box)):
-                    if box[i][0] == name:
-                        box[i][1] = focal
-                        found = True
-                        break
-                if not found:
+                name = entry.split('=')[0]
+                focal = int(entry.split('=')[1])
+                box = boxes[self.hash(name)]
+                lens = next((lens for lens in box if lens[0] == name), None)
+                if lens is None:
                     box.append([name, focal])
-            # print(boxes)
+                else:
+                    lens[1] = focal
 
         accu = 0
         for i, box in enumerate(boxes):
