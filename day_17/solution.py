@@ -1,269 +1,43 @@
-import copy
-import dataclasses
-import itertools
-import math
 import pathlib
-import typing
 import unittest
 import heapq
 
 from moszir_utils.asterisk import *
+from moszir_utils.asterisk import Position as P
 
 
 class Solution:
     def __init__(self, path: pathlib.Path):
-        self.map = [[int(c) for c in line] for line in path.read_text().splitlines()]
-        self.height = len(self.map)
-        self.width = len(self.map)
+        self.map = Table.from_table([[int(c) for c in line] for line in path.read_text().splitlines()])
+        self.height = self.map.height
+        self.width = self.map.width
+
+    def solve(self, *, min_to_turn: int = 0, max_without_turn: int) -> int:
+        dist = Table(height=self.height, width=self.width)
+        for p in dist.positions():
+            dist[p] = {}
+        q = [(0, P(0, 0), P(1, 0), 0), (0, P(0, 0), P(0, 1), 0)]  # value, position, direction, so far
+        while q:
+            value, pos, d, so_far = heapq.heappop(q)
+            go = [(P(d.c, d.r), 1), (P(-d.c, -d.r), 1)] if so_far >= min_to_turn else []
+            if so_far < max_without_turn:
+                go.append((d, so_far+1))
+            for new_dir, new_so_far in go:
+                new_pos = pos+new_dir
+                if self.map.valid_index(new_pos):
+                    new_v = value + self.map[new_pos]
+                    key = (new_dir, new_so_far)
+                    if key not in dist[new_pos] or new_v < dist[new_pos][key]:
+                        dist[new_pos][key] = new_v
+                        heapq.heappush(q, (new_v, new_pos, *key))
+
+        return min(dist[P(self.height-1, self.width-1)].values())
 
     def solve_a(self) -> int:
-        # print(self.map)
-        dist = [[{} for c in line] for line in self.map]
-        dist[0][0][('right', 0)] = 0
-        dist[0][0][('down', 0)] = 0
-        q = [(0, (0, 0, ('right', 0))), (0, (0, 0, ('down', 0)))]  # value, coordinate, sort after adding stuff!
-        while q:
-            p = heapq.heappop(q)
-            v, (x, y, (direction, so_far)) = p
-            if direction == 'right':
-                if x > 0:  # go up
-                    w = v + self.map[x-1][y]
-                    nd = ('up', 1)
-                    if nd not in dist[x-1][y]:
-                        dist[x-1][y][nd] = w
-                        heapq.heappush(q, (w, (x-1, y, nd)))
-                    elif w < dist[x-1][y][nd]:
-                        dist[x-1][y][nd] = w
-                        heapq.heappush(q, (w, (x-1, y, nd)))
-                if x+1 < self.height:  # go down
-                    w = v + self.map[x+1][y]
-                    nd = ('down', 1)
-                    if nd not in dist[x+1][y]:
-                        dist[x+1][y][nd] = w
-                        heapq.heappush(q, (w, (x+1, y, nd)))
-                    elif w < dist[x+1][y][nd]:
-                        dist[x+1][y][nd] = w
-                        heapq.heappush(q, (w, (x+1, y, nd)))
-                if y+1 < self.width and so_far < 3:
-                    w = v + self.map[x][y+1]
-                    nd = ('right', so_far+1)
-                    if nd not in dist[x][y+1]:
-                        dist[x][y+1][nd] = w
-                        heapq.heappush(q, (w, (x, y+1, nd)))
-                    elif w < dist[x][y+1][nd]:
-                        dist[x][y+1][nd] = w
-                        heapq.heappush(q, (w, (x, y+1, nd)))
-            if direction == 'left':
-                if x > 0:  # go up
-                    w = v + self.map[x-1][y]
-                    nd = ('up', 1)
-                    if nd not in dist[x-1][y]:
-                        dist[x-1][y][nd] = w
-                        heapq.heappush(q, (w, (x-1, y, nd)))
-                    elif w < dist[x-1][y][nd]:
-                        dist[x-1][y][nd] = w
-                        heapq.heappush(q, (w, (x-1, y, nd)))
-                if x+1 < self.height:  # go down
-                    w = v + self.map[x+1][y]
-                    nd = ('down', 1)
-                    if nd not in dist[x+1][y]:
-                        dist[x+1][y][nd] = w
-                        heapq.heappush(q, (w, (x+1, y, nd)))
-                    elif w < dist[x+1][y][nd]:
-                        dist[x+1][y][nd] = w
-                        heapq.heappush(q, (w, (x+1, y, nd)))
-                if y-1 >= 0 and so_far < 3:
-                    w = v + self.map[x][y-1]
-                    nd = ('left', so_far+1)
-                    if nd not in dist[x][y-1]:
-                        dist[x][y-1][nd] = w
-                        heapq.heappush(q, (w, (x, y-1, nd)))
-                    elif w < dist[x][y-1][nd]:
-                        dist[x][y-1][nd] = w
-                        heapq.heappush(q, (w, (x, y-1, nd)))
-            if direction == 'up':
-                if y > 0:  # go left
-                    w = v + self.map[x][y-1]
-                    nd = ('left', 1)
-                    if nd not in dist[x][y-1]:
-                        dist[x][y-1][nd] = w
-                        heapq.heappush(q, (w, (x, y-1, nd)))
-                    elif w < dist[x][y-1][nd]:
-                        dist[x][y-1][nd] = w
-                        heapq.heappush(q, (w, (x, y-1, nd)))
-                if y+1 < self.width:  # go right
-                    w = v + self.map[x][y+1]
-                    nd = ('right', 1)
-                    if nd not in dist[x][y+1]:
-                        dist[x][y+1][nd] = w
-                        heapq.heappush(q, (w, (x, y+1, nd)))
-                    elif w < dist[x][y+1][nd]:
-                        dist[x][y+1][nd] = w
-                        heapq.heappush(q, (w, (x, y+1, nd)))
-                if x-1 >= 0 and so_far < 3:
-                    w = v + self.map[x-1][y]
-                    nd = ('up', so_far+1)
-                    if nd not in dist[x-1][y]:
-                        dist[x-1][y][nd] = w
-                        heapq.heappush(q, (w, (x-1, y, nd)))
-                    elif w < dist[x-1][y][nd]:
-                        dist[x-1][y][nd] = w
-                        heapq.heappush(q, (w, (x-1, y, nd)))
-            if direction == 'down':
-                if y > 0:  # go left
-                    w = v + self.map[x][y-1]
-                    nd = ('left', 1)
-                    if nd not in dist[x][y-1]:
-                        dist[x][y-1][nd] = w
-                        heapq.heappush(q, (w, (x, y-1, nd)))
-                    elif w < dist[x][y-1][nd]:
-                        dist[x][y-1][nd] = w
-                        heapq.heappush(q, (w, (x, y-1, nd)))
-                if y+1 < self.width:  # go right
-                    w = v + self.map[x][y+1]
-                    nd = ('right', 1)
-                    if nd not in dist[x][y+1]:
-                        dist[x][y+1][nd] = w
-                        heapq.heappush(q, (w, (x, y+1, nd)))
-                    elif w < dist[x][y+1][nd]:
-                        dist[x][y+1][nd] = w
-                        heapq.heappush(q, (w, (x, y+1, nd)))
-                if x+1 < self.height and so_far < 3:
-                    w = v + self.map[x+1][y]
-                    nd = ('down', so_far+1)
-                    if nd not in dist[x+1][y]:
-                        dist[x+1][y][nd] = w
-                        heapq.heappush(q, (w, (x+1, y, nd)))
-                    elif w < dist[x+1][y][nd]:
-                        dist[x+1][y][nd] = w
-                        heapq.heappush(q, (w, (x+1, y, nd)))
-
-        return min(dist[self.height-1][self.width-1].values())
+        return self.solve(max_without_turn=3)
 
     def solve_b(self) -> int:
-        dist = [[{} for c in line] for line in self.map]
-        dist[0][0][('right', 0)] = 0
-        dist[0][0][('down', 0)] = 0
-        q = [(0, (0, 0, ('right', 0))), (0, (0, 0, ('down', 0)))]  # value, coordinate, sort after adding stuff!
-        while q:
-            if len(q) % 100 == 0:
-                print(len(q))
-            p = heapq.heappop(q)
-            v, (x, y, (direction, so_far)) = p
-            if direction == 'right':
-                if x > 0 and so_far >= 4:  # go up
-                    w = v + self.map[x-1][y]
-                    nd = ('up', 1)
-                    if nd not in dist[x-1][y]:
-                        dist[x-1][y][nd] = w
-                        heapq.heappush(q, (w, (x-1, y, nd)))
-                    elif w < dist[x-1][y][nd]:
-                        dist[x-1][y][nd] = w
-                        heapq.heappush(q, (w, (x-1, y, nd)))
-                if x+1 < self.height and so_far >= 4:  # go down
-                    w = v + self.map[x+1][y]
-                    nd = ('down', 1)
-                    if nd not in dist[x+1][y]:
-                        dist[x+1][y][nd] = w
-                        heapq.heappush(q, (w, (x+1, y, nd)))
-                    elif w < dist[x+1][y][nd]:
-                        dist[x+1][y][nd] = w
-                        heapq.heappush(q, (w, (x+1, y, nd)))
-                if y+1 < self.width and so_far < 10:
-                    w = v + self.map[x][y+1]
-                    nd = ('right', so_far+1)
-                    if nd not in dist[x][y+1]:
-                        dist[x][y+1][nd] = w
-                        heapq.heappush(q, (w, (x, y+1, nd)))
-                    elif w < dist[x][y+1][nd]:
-                        dist[x][y+1][nd] = w
-                        heapq.heappush(q, (w, (x, y+1, nd)))
-            if direction == 'left':
-                if x > 0 and so_far >= 4:  # go up
-                    w = v + self.map[x-1][y]
-                    nd = ('up', 1)
-                    if nd not in dist[x-1][y]:
-                        dist[x-1][y][nd] = w
-                        heapq.heappush(q, (w, (x-1, y, nd)))
-                    elif w < dist[x-1][y][nd]:
-                        dist[x-1][y][nd] = w
-                        heapq.heappush(q, (w, (x-1, y, nd)))
-                if x+1 < self.height and so_far >= 4:  # go down
-                    w = v + self.map[x+1][y]
-                    nd = ('down', 1)
-                    if nd not in dist[x+1][y]:
-                        dist[x+1][y][nd] = w
-                        heapq.heappush(q, (w, (x+1, y, nd)))
-                    elif w < dist[x+1][y][nd]:
-                        dist[x+1][y][nd] = w
-                        heapq.heappush(q, (w, (x+1, y, nd)))
-                if y-1 >= 0 and so_far < 10:
-                    w = v + self.map[x][y-1]
-                    nd = ('left', so_far+1)
-                    if nd not in dist[x][y-1]:
-                        dist[x][y-1][nd] = w
-                        heapq.heappush(q, (w, (x, y-1, nd)))
-                    elif w < dist[x][y-1][nd]:
-                        dist[x][y-1][nd] = w
-                        heapq.heappush(q, (w, (x, y-1, nd)))
-            if direction == 'up':
-                if y > 0 and so_far >= 4:  # go left
-                    w = v + self.map[x][y-1]
-                    nd = ('left', 1)
-                    if nd not in dist[x][y-1]:
-                        dist[x][y-1][nd] = w
-                        heapq.heappush(q, (w, (x, y-1, nd)))
-                    elif w < dist[x][y-1][nd]:
-                        dist[x][y-1][nd] = w
-                        heapq.heappush(q, (w, (x, y-1, nd)))
-                if y+1 < self.width and so_far >= 4:  # go right
-                    w = v + self.map[x][y+1]
-                    nd = ('right', 1)
-                    if nd not in dist[x][y+1]:
-                        dist[x][y+1][nd] = w
-                        heapq.heappush(q, (w, (x, y+1, nd)))
-                    elif w < dist[x][y+1][nd]:
-                        dist[x][y+1][nd] = w
-                        heapq.heappush(q, (w, (x, y+1, nd)))
-                if x-1 >= 0 and so_far < 10:
-                    w = v + self.map[x-1][y]
-                    nd = ('up', so_far+1)
-                    if nd not in dist[x-1][y]:
-                        dist[x-1][y][nd] = w
-                        heapq.heappush(q, (w, (x-1, y, nd)))
-                    elif w < dist[x-1][y][nd]:
-                        dist[x-1][y][nd] = w
-                        heapq.heappush(q, (w, (x-1, y, nd)))
-            if direction == 'down':
-                if y > 0 and so_far >= 4:  # go left
-                    w = v + self.map[x][y-1]
-                    nd = ('left', 1)
-                    if nd not in dist[x][y-1]:
-                        dist[x][y-1][nd] = w
-                        heapq.heappush(q, (w, (x, y-1, nd)))
-                    elif w < dist[x][y-1][nd]:
-                        dist[x][y-1][nd] = w
-                        heapq.heappush(q, (w, (x, y-1, nd)))
-                if y+1 < self.width and so_far >= 4:  # go right
-                    w = v + self.map[x][y+1]
-                    nd = ('right', 1)
-                    if nd not in dist[x][y+1]:
-                        dist[x][y+1][nd] = w
-                        heapq.heappush(q, (w, (x, y+1, nd)))
-                    elif w < dist[x][y+1][nd]:
-                        dist[x][y+1][nd] = w
-                        heapq.heappush(q, (w, (x, y+1, nd)))
-                if x+1 < self.height and so_far < 10:
-                    w = v + self.map[x+1][y]
-                    nd = ('down', so_far+1)
-                    if nd not in dist[x+1][y]:
-                        dist[x+1][y][nd] = w
-                        heapq.heappush(q, (w, (x+1, y, nd)))
-                    elif w < dist[x+1][y][nd]:
-                        dist[x+1][y][nd] = w
-                        heapq.heappush(q, (w, (x+1, y, nd)))
-
-        return min(dist[self.height-1][self.width-1].values())
+        return self.solve(min_to_turn=4, max_without_turn=10)
 
 
 class Tests(unittest.TestCase):
