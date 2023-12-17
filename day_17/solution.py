@@ -31,7 +31,9 @@ class Solution:
                         dist[new_pos][key] = new_v
                         heapq.heappush(q, (new_v, new_pos, *key))
 
-        return min(dist[P(self.height-1, self.width-1)].values())
+        return min(v
+                   for k, v in dist[P(self.height-1, self.width-1)].items()
+                   if k[1] >= min_to_turn)
 
     def solve_a(self) -> int:
         return self.solve(max_without_turn=3)
