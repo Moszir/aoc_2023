@@ -1,4 +1,3 @@
-import dataclasses
 import typing
 
 
@@ -31,6 +30,12 @@ class Position(typing.NamedTuple):
     @property
     def neighbors(self) -> typing.List['Position']:
         return [self.up, self.right, self.down, self.left]
+
+    def rotate_90(self) -> 'Position':
+        return Position(r=-self.c, c=self.r)
+
+    def rotate_270(self) -> 'Position':
+        return Position(r=self.c, c=-self.r)
 
     @classmethod
     def manhattan_distance(cls, point1: 'Position', point2: 'Position') -> int:

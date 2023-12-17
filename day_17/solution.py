@@ -29,7 +29,7 @@ class Solution:
                     key = (new_dir, new_so_far)
                     if key not in dist[new_pos] or new_v < dist[new_pos][key]:
                         dist[new_pos][key] = new_v
-                        heapq.heappush(q, (new_v, new_pos, *key))
+                        heapq.heappush(q, (new_v, new_pos, new_dir, new_so_far))
 
         return min(v
                    for k, v in dist[P(self.height-1, self.width-1)].items()

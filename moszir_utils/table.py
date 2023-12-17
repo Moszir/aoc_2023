@@ -32,7 +32,7 @@ class Table:
         return self.__width
 
     def valid_index(self, position: Position) -> bool:
-        return 0 <= position.r < self.height and 0 <= position.c < self.width
+        return 0 <= position.r < self.__height and 0 <= position.c < self.__width
 
     def __getitem__(self, position: Position):
         """ Unchecked indexing """
