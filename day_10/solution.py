@@ -21,13 +21,13 @@ class Solution:
     def neighbors(self, position: Position) -> typing.List[Position]:
         value = self.map[position]
         result = []
-        if self.match_vertically(self.map[position.up], value):
+        if self.match_vertically(self.map.get(position.up), value):
             result.append(position.up)
-        if self.match_vertically(value, self.map[position.down]):
+        if self.match_vertically(value, self.map.get(position.down)):
             result.append(position.down)
-        if self.match_horizontally(self.map[position.left], value):
+        if self.match_horizontally(self.map.get(position.left), value):
             result.append(position.left)
-        if self.match_horizontally(value, self.map[position.right]):
+        if self.match_horizontally(value, self.map.get(position.right)):
             result.append(position.right)
         return result
 
@@ -69,14 +69,14 @@ class Solution:
         main_loop = set(self.find_main_loop())
         for row_index in range(self.map.height):
             for column_index in range(self.map.width):
-                position = Position(row=row_index, column=column_index)
+                position = Position(row_index, column_index)
                 if position not in main_loop:
                     self.map[position] = '.'
 
         # Blow up everything twice the size, so the pipes don't "touch"
         # Make sure there is an empty row and column around the map to flood from.
         def blow(original: Position) -> Position:
-            return Position(row=2*original.row+1, column=2*original.column+1)
+            return Position(2 * original.r + 1, 2 * original.c + 1)
 
         blow_rows = 2*self.map.height+1
         blow_columns = 2*self.map.width+1
@@ -85,19 +85,18 @@ class Solution:
             value = self.map[position]
             blow_position = blow(position)
             blow_map[blow_position] = value
-            if self.match_horizontally(value, self.map[position.right]):
+            if self.match_horizontally(value, self.map.get(position.right)):
                 blow_map[blow_position.right] = '-'
-            if self.match_vertically(value, self.map[position.down]):
+            if self.match_vertically(value, self.map.get(position.down)):
                 blow_map[blow_position.down] = '|'
 
         # Flood from the outside
         q = [Position(0, 0)]
         while len(q) > 0:
             p = q.pop()
-            if blow_map[p] == '.':
+            if blow_map.get(p) == '.':
                 blow_map[p] = '*'
                 q.extend(p.neighbors)
-        # blow_map.print()
 
         # Count the "dry spots"
         return sum(
@@ -132,7 +131,7 @@ class Solution:
         main_loop = set(self.find_main_loop())
         for row_index in range(self.map.height):
             for column_index in range(self.map.width):
-                position = Position(row=row_index, column=column_index)
+                position = Position(r=row_index, c=column_index)
                 if position not in main_loop:
                     self.map[position] = '.'
 
@@ -145,7 +144,7 @@ class Solution:
         for row in range(self.map.height):
             inside = False
             for column in range(self.map.width):
-                value = self.map[Position(row=row, column=column)]
+                value = self.map[Position(row, column)]
                 if value == '.' and inside:
                     count += 1
                 elif value in ('L', '|', 'J'):

@@ -11,7 +11,9 @@ from moszir_utils.asterisk import *
 
 class Solution:
     def __init__(self, path: pathlib.Path):
-        lines = path.read_text().splitlines()
+        self.lines = path.read_text().splitlines()
+        self.height = len(self.lines)
+        self.width = len(self.lines[0])
 
     def solve_a(self) -> int:
         return 0

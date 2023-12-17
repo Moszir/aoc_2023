@@ -2,29 +2,31 @@ import dataclasses
 import typing
 
 
-@dataclasses.dataclass
-class Position:
-    row: int
-    column: int
+class Position(typing.NamedTuple):
+    r: int  # row
+    c: int  # column
+
+    def __add__(self, other) -> 'Position':
+        return Position(self.r + other.r, self.c + other.c)
 
     def __hash__(self):
-        return (self.row, self.column).__hash__()
+        return (self.r, self.c).__hash__()
 
     @property
     def up(self) -> 'Position':
-        return Position(self.row-1, self.column)
+        return Position(self.r - 1, self.c)
 
     @property
     def down(self) -> 'Position':
-        return Position(self.row+1, self.column)
+        return Position(self.r + 1, self.c)
 
     @property
     def left(self) -> 'Position':
-        return Position(self.row, self.column-1)
+        return Position(self.r, self.c - 1)
 
     @property
     def right(self) -> 'Position':
-        return Position(self.row, self.column+1)
+        return Position(self.r, self.c + 1)
 
     @property
     def neighbors(self) -> typing.List['Position']:
@@ -32,4 +34,4 @@ class Position:
 
     @classmethod
     def manhattan_distance(cls, point1: 'Position', point2: 'Position') -> int:
-        return abs(point1.row - point2.row) + abs(point1.column - point2.column)
+        return abs(point1.r - point2.r) + abs(point1.c - point2.c)

@@ -31,8 +31,8 @@ class Solution:
             ]
 
     def galaxy_distance(self, galaxy_1: Position, galaxy_2: Position, empty_line_value: int = 1) -> int:
-        sr, lr = min_max(galaxy_1.row, galaxy_2.row)  # smaller row index, larger row index
-        sc, lc = min_max(galaxy_1.column, galaxy_2.column)  # smaller column index, larger column index
+        sr, lr = min_max(galaxy_1.r, galaxy_2.r)  # smaller row index, larger row index
+        sc, lc = min_max(galaxy_1.c, galaxy_2.c)  # smaller column index, larger column index
         rd = lr - sr + (empty_line_value - 1) * sum((1 for row in self.empty_lines if sr < row < lr))
         cd = lc - sc + (empty_line_value - 1) * sum((1 for col in self.empty_columns if sc < col < lc))
         return rd + cd
@@ -71,14 +71,14 @@ class Solution2:
         for row_index, row in enumerate(self.map):
             if '#' not in row:
                 for op, ep in expansion.items():
-                    if row_index < op.row:
-                        ep.row += factor-1
+                    if row_index < op.r:
+                        ep.r += factor - 1
 
         for column_index, column in enumerate(zip(*self.map)):
             if '#' not in column:
                 for op, ep in expansion.items():
-                    if column_index < op.column:
-                        ep.column += factor-1
+                    if column_index < op.c:
+                        ep.c += factor - 1
         return expansion.values()
 
     def solve(self, factor: int = 1) -> int:
