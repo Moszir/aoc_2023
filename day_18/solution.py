@@ -1,7 +1,7 @@
 import pathlib
 import unittest
 
-from moszir_utils.polygon import shoe_lace
+from moszir_utils.polygon import shoe_lace_area as area
 
 
 class Solution:
@@ -19,7 +19,9 @@ class Solution:
             x += dist if dire == 'D' else -dist if dire == 'U' else 0
             y += dist if dire == 'R' else -dist if dire == 'L' else 0
             p.append((x, y))
-        return shoe_lace(p) + length / 2 + 1
+        # Area = Interior points + Boundary points / 2 - 1  (Pick's theorem)
+        # Result = i + b = (A - b/2 + 1) + b = A + b/2 + 1
+        return int(area(p)) + length // 2 + 1
 
     def solve_b(self) -> int:
         p = [(0, 0)]
@@ -34,7 +36,7 @@ class Solution:
             x += dx * dist
             y += dy * dist
             p.append((x, y))
-        return shoe_lace(p) + length / 2 + 1
+        return int(area(p)) + length // 2 + 1
 
 
 class Tests(unittest.TestCase):
