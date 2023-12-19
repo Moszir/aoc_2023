@@ -1,26 +1,72 @@
 import copy
-import dataclasses
-import itertools
 import math
 import pathlib
 import typing
 import unittest
 
-from moszir_utils.asterisk import *
+
+type Point = typing.Tuple[int, int, int, int]
+type Interval = typing.List[typing.List[int]]
+type Task = typing.Tuple[str, Interval]
+type GoodTask = typing.Optional[Task]
+type FurtherTask = typing.Optional[Task]
+type Tasks = typing.List[Task]
 
 
 class Condition:
     def __init__(self, s):
-        self.value = None
-        self.what = None
-        self.to = None
-        self.type = ('le' if '<' in s else 'gr' if '>' in s else 'fin')
-        if self.type in ('le', 'gr'):
-            self.what = ['x', 'm', 'a', 's'].index(s[0])
-            self.value = int(s.split(':')[0][2:])
-            self.to = s.split(':')[1]
+        self.less = '<' in s
+        self.greater = '>' in s
+        neither = not (self.less or self.greater)
+        self.value = None if neither else int(s.split(':')[0][2:])
+        self.index = None if neither else 'xmas'.index(s[0])
+        self.target = s if neither else s.split(':')[1]
+        self.process = (
+            (lambda p: self.process_less(p)) if self.less else
+            (lambda p: self.process_greater(p)) if self.greater else
+            (lambda p: self.process_unconditional(p))
+        )
+        self.process_interval = (
+            (lambda i: self.process_interval_less(i)) if self.less else
+            (lambda i: self.process_interval_greater(i)) if self.greater else
+            (lambda i: self.process_interval_unconditional(i))
+        )
+
+    def process_less(self, point: Point) -> typing.Optional[str]:
+        return self.target if point[self.index] < self.value else None
+
+    def process_greater(self, point: Point) -> typing.Optional[str]:
+        return self.target if point[self.index] > self.value else None
+
+    def process_unconditional(self, _: Point) -> typing.Optional[str]:
+        return self.target
+
+    def process_interval_less(self, interval: Interval) -> typing.Tuple[GoodTask, FurtherTask]:
+        a, b = interval[self.index]
+        if b < self.value:
+            return (self.target, interval), None
+        elif a >= self.value:
+            return None, ('', interval)
         else:
-            self.to = s
+            good_part = copy.deepcopy(interval)
+            good_part[self.index][1] = self.value - 1
+            interval[self.index][0] = self.value
+            return (self.target, good_part), ('', interval)
+
+    def process_interval_greater(self, interval: Interval) -> typing.Tuple[GoodTask, FurtherTask]:
+        a, b = interval[self.index]
+        if a > self.value:
+            return (self.target, interval), None
+        elif b <= self.value:
+            return None, ('', interval)
+        else:
+            good_part = copy.deepcopy(interval)
+            good_part[self.index][0] = self.value + 1
+            interval[self.index][1] = self.value
+            return (self.target, good_part), ('', interval)
+
+    def process_interval_unconditional(self, interval: Interval) -> typing.Tuple[GoodTask, FurtherTask]:
+        return (self.target, interval), None
 
 
 class WorkFlow:
@@ -28,119 +74,70 @@ class WorkFlow:
         self.name = line.split('{')[0]
         self.steps = [Condition(s) for s in line.split('{')[1][:-1].split(',')]
 
-    def process(self, i):
-        # # print(self.name, " processing ", i)
-        for step in self.steps:
-            if step.type == 'le':
-                # # print(step.what, step.value)
-                if i[step.what] < step.value:
-                    return step.to
-            elif step.type == 'gr':
-                # # print(step.what, step.value)
-                if i[step.what] > step.value:
-                    return step.to
-            else:
-                return step.to
+    def process_point(self, point: Point) -> str:
+        """ Processes a single input point.
 
-    def process2(self, i: typing.List[typing.List[int]]):
-        tasks = []
-        i = copy.deepcopy(i)
-        # print(self.name, " processing ", i)
+        Note that the workflow is guaranteed to have an unconditional target at its end.
+        """
         for step in self.steps:
-            if step.type == 'le':
-                # print('le')
-                if i[step.what][1] < step.value:
-                    tasks.append((step.to, copy.deepcopy(i)))
-                elif i[step.what][0] >= step.value:
-                    continue
-                else:
-                    # print('3')
-                    j = copy.deepcopy(i)
-                    j[step.what][1] = step.value-1
-                    # print(j, " -> ", step.to)
-                    tasks.append((step.to, j))
-                    i[step.what][0] = step.value  # goes through
-                    # print(i, " next step")
-            elif step.type == 'gr':
-                # print('gr')
-                if i[step.what][0] > step.value:
-                    # print('1')
-                    tasks.append((step.to, copy.deepcopy(i)))
-                    # print(i, " -> ", step.to)
-                elif i[step.what][1] <= step.value:
-                    # print('2')
-                    continue
-                else:
-                    # print('3')
-                    j = copy.deepcopy(i)
-                    j[step.what][0] = step.value+1
-                    # print(j, " -> ", step.to)
-                    tasks.append((step.to, j))
-                    i[step.what][1] = step.value  # goes through
-                    # print(i, " next step")
+            result = step.process(point)
+            if result is not None:
+                return result
+
+    def process_interval(self, interval: Interval) -> Tasks:
+        """ Processes an interval of input points.
+
+        Splits the input interval into subintervals, and returns where they go.
+        The returned "task list" can contain 'A' and 'R' as destinations that the caller should handle differently
+        than real workflow destinations.
+        """
+        tasks = []
+
+        for step in self.steps:
+            good_task, further_task = step.process_interval(interval)
+            if good_task is not None:
+                tasks.append(good_task)
+            if further_task is not None:
+                interval = further_task[1]
             else:
-                # print(i, " -> ", step.to)  # todo R can be skipped
-                tasks.append((step.to, copy.deepcopy(i)))
-        # print("Sending back ", tasks)
+                break
         return tasks
 
 
 class Solution:
     def __init__(self, path: pathlib.Path):
-        self.workflows, self.inputs = path.read_text().split('\n\n')[:2]
-        self.workflows = [WorkFlow(line) for line in self.workflows.split('\n')]
-        self.inputs = [
-            [int(t.split('=')[1].split('}')[0]) for t in i.split(',')]  # x, m, a, s
-            for i in self.inputs.split('\n')
-            ]
+        workflows, inputs = path.read_text().split('\n\n')[:2]
+        self.workflows = [WorkFlow(line) for line in workflows.split('\n')]
+        self.inputs: typing.List[Point] = [
+            tuple(int(t.split('=')[1].split('}')[0]) for t in i.split(','))
+            for i in inputs.split('\n')]
+
+    def find_work_flow(self, name: str) -> WorkFlow:
+        return next((wf for wf in self.workflows if wf.name == name))
+
+    def process_point(self, point: Point) -> bool:
+        wf = self.find_work_flow('in')
+        while True:
+            result = wf.process_point(point)
+            if result == 'A':
+                return True
+            elif result == 'R':
+                return False
+            else:
+                wf = self.find_work_flow(result)
 
     def solve_a(self) -> int:
-        start = None
-        for wf in self.workflows:
-            if wf.name == 'in':
-                start = wf
-        assert start is not None
-        accu = 0
-        for i in self.inputs:
-            # # print(i)
-            wf = start
-            while wf is not None:
-                result = wf.process(i)
-                # # print(result)
-                if result == 'A':
-                    accu += sum(i)
-                    wf = None
-                elif result == 'R':
-                    wf = None
-                else:
-                    for wf2 in self.workflows:
-                        if wf2.name == result:
-                            wf = wf2
-        return accu
+        return sum((sum(point) for point in self.inputs if self.process_point(point)))
 
     def solve_b(self) -> int:
         accu = 0
-        i = [[1, 4000], [1, 4000], [1, 4000], [1, 4000]]
-        tasks = [('in', i)]
+        tasks = [('in', [[1, 4000], [1, 4000], [1, 4000], [1, 4000]])]
         while tasks:
             p = tasks.pop(0)
-            # print("-----------------------------------------")
             if p[0] == 'A':
-                prod = 1
-                for j in range(4):
-                    prod *= (p[1][j][1] - p[1][j][0] + 1)
-                # print(p[1], " accepted, adding ", prod)
-                accu += prod
-            elif p[0] == 'R':
-                # print(p[1], " rejected")
-                pass
-            else:
-                wf2 = None
-                for wf in self.workflows:
-                    if wf.name == p[0]:
-                        wf2 = wf
-                tasks.extend(wf2.process2(p[1]))
-            # print(tasks)
+                accu += math.prod((p[1][j][1] - p[1][j][0] + 1 for j in range(4)))
+            elif p[0] != 'R':
+                tasks.extend(self.find_work_flow(p[0]).process_interval(p[1]))
         return accu
 
 
@@ -163,7 +160,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(167_409_079_868_000, self.example().solve_b())
 
     def test_b_input(self):
-        self.assertEqual(142863718918201, self.real_input().solve_b())
+        self.assertEqual(142_863_718_918_201, self.real_input().solve_b())
 
 
 if __name__ == '__main__':
