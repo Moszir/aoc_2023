@@ -95,7 +95,7 @@ class Output:
 
 class Solution:
     def __init__(self, path: pathlib.Path):
-        self.instances = [Output()]
+        self.instances = [Output(), FlipFlop('%rx -> output')]
         for line in path.read_text().splitlines():
             if line[0] == '%':
                 self.instances.append(FlipFlop(line))
@@ -161,13 +161,10 @@ class Tests(unittest.TestCase):
         self.assertEqual(11687500, self.example().solve_a())
 
     def test_a_input(self):
-        self.assertEqual(0, self.real_input().solve_a())
-
-    def test_b_example(self):
-        self.assertEqual(0, self.example().solve_b())
+        self.assertEqual(814934624, self.real_input().solve_a())
 
     def test_b_input(self):
-        self.assertEqual(0, self.real_input().solve_b())
+        self.assertEqual(228282646835717, self.real_input().solve_b())
 
 
 if __name__ == '__main__':
