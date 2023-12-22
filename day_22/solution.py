@@ -15,6 +15,9 @@ for line in lines:
 
 # print(bricks)
 
+bricks = sorted(bricks, key=lambda b: b[2])
+
+
 def proj(brick):
     return [
         (x, y)
@@ -67,3 +70,26 @@ print(
         1
         for i in range(len(bricks))
         if [i] not in supported_by)))
+
+
+accu = 0
+for i in range(len(bricks)):
+    falls = 0
+    removed = [i]
+    change = True
+    # print(i)
+    while change:
+        change = False
+        for j, s in enumerate(supported_by):
+            if j in removed or s == []:
+                continue
+            # print('  ', j)
+            if all((k in removed for k in s)):
+                # print('  all of ', s, 'in', removed)
+                falls += 1
+                removed.append(j)
+                change = True
+    accu += len(removed)-1  # -self
+    # print("Removing ", i, removed)
+
+print(accu)
