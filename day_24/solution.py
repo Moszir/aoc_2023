@@ -1,7 +1,8 @@
 import itertools
 import typing
-from collections import defaultdict, deque
 import math
+from scipy.optimize import fsolve
+# from z3 import *
 
 # file_path = 'example.txt'
 file_path = 'input.txt'
@@ -53,3 +54,48 @@ for a, b in itertools.combinations(entries, 2):
     # print(a, b, intersect_xy(a, b))
 
 print(accu)
+
+
+# part 2
+
+# Find xr, yr, zr, vxr, vyr, vzr such that
+# xr + T * vxr = x0 + T vx0
+# yr + T * vyr = y0 + T vy0
+# zr + T * vzr = z0 + T vz0
+# is solvable for every xyz, v xyz
+
+# T = (x0 - xr) / (vxr - vx0)
+# T = (y0 - yr) / (vyr - vy0)
+# T = (z0 - zr) / (vzr - vz0)
+# for i, entry in enumerate(entries):
+#     print('{}, {}, {}'.format(
+#         f'x + t{i} * vx - {entry[0]} - t{i}*{entry[3]}',
+#         f'y + t{i} * vy - {entry[1]} - t{i}*{entry[4]}',
+#         f'z + t{i} * vz - {entry[2]} - t{i}*{entry[5]}'
+#     ))
+
+
+def equations(p):
+    x_, y_, z_, vx_, vy_, vz_ = p
+    res = []
+    for i in entries[1:4]:
+        x1, y1, z1, vx1, vy1, vz1 = i
+        res.append((x_ - x1) * (vy_ - vy1) - (y_ - y1) * (vx_ - vx1))
+        res.append((x_ - x1) * (vz_ - vz1) - (z_ - z1) * (vx_ - vx1))
+    return res
+
+
+x, y, z, xv, yv, zv = fsolve(equations, entries[0])
+
+print(x)
+print(y)
+print(z)
+print(int(round(x+y+z)))
+# and add +1, because the rounding was wrong -.-
+
+
+
+
+
+
+
