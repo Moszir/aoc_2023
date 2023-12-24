@@ -1,4 +1,5 @@
 import itertools
+import random
 import typing
 from scipy.optimize import fsolve
 
@@ -13,7 +14,6 @@ with open(file_path) as f:
         )
         for line in f.readlines()
     ]
-
 
 HailStone = typing.Tuple[int, int, int, int, int, int]
 XyPoint = typing.Tuple[float, float]
@@ -61,7 +61,6 @@ for a, b in itertools.combinations(entries, 2):
 
 print(accu)
 
-
 # part 2
 
 # Find xr, yr, zr, vxr, vyr, vzr such that
@@ -78,25 +77,45 @@ print(accu)
 #  (x0 - x) / (vx - vx0) == (y0 - y) / (vy - vy0)  -->  (x-x0)*(vy-vy0) - (y-y0)*(vx-vx0) == 0
 #  (x0 - x) / (vx - vx0) == (z0 - z) / (vz - vz0)  -->  (x-x0)*(vz-vz0) - (z-z0)*(vx-vx0) == 0
 
+# Add some Monte-Carlo voting system to combat uncertainty (thanks to D. Hanak)
+id1, id2, id3 = 0, 0, 0
+
+
+def randomize_ids():
+    global id1, id2, id3
+    id1 = random.choice(range(300))
+    id2 = random.choice(range(300))
+    while id2 == id1:
+        id2 = random.choice(range(300))
+    id3 = random.choice(range(300))
+    while id3 in (id1, id2):
+        id3 = random.choice(range(300))
+
 
 def equations(p):
     x_, y_, z_, vx_, vy_, vz_ = p
     res = []
     # 6 equations for the 6 variables, start from entries[0]
-    for i in entries[1:4]:
-        x1, y1, z1, vx1, vy1, vz1 = i
+    global id1, id2, id3
+    for entry_id in (id1, id2, id3):
+        x1, y1, z1, vx1, vy1, vz1 = entries[entry_id]
         res.append((x_ - x1) * (vy_ - vy1) - (y_ - y1) * (vx_ - vx1))
         res.append((x_ - x1) * (vz_ - vz1) - (z_ - z1) * (vx_ - vx1))
     return res
 
 
-x, y, z, vx, vy, vz = fsolve(equations, entries[0])
+# For every entry as a starting point, solve 10 random equation system, and vote for the result
+votes = []
+for i in range(300):
+    start = entries[i]
+    for j in range(10):
+        randomize_ids()
+        x, y, z, vx, vy, vz = fsolve(equations, start, xtol=1e-16)
+        v = round(x) + round(y) + round(z)
+        votes.append(v)
 
-# This is not an exact solution of course, but there's a good chance that if you hit 3 hailstones,
-# then you hit all of them, because the numbers were generated that way.
-# And our solution is in floats...
-print(x, y, z, vx, vy, vz)
-print(x+y+z)  # 578177720733042.5
-# solution for my input is 578_177_720_733_043, close enough
+vote_values = set(votes)
+vote_counts = sorted([(sum((1 for v in votes if v == vote_value)), vote_value) for vote_value in vote_values], reverse=True)
 
-print(round(x) + round(y) + round(z))  # This would have been better, matching the actual solution
+print(vote_counts[0])
+assert vote_counts[0][1] == 578_177_720_733_043
